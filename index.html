@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A reproducible comparison of passage-level telomere readouts and Telometer parameter sensitivity, using public Artandi Lab data.">
+  <title>Exploratory Analyses Inspired by the Artandi Lab</title>
+  <link rel="stylesheet" href="styles.css?v=20261006-1">
+</head>
+<body>
+  <main class="page">
+    <h1>Exploratory Analyses Inspired by the Artandi Lab</h1>
+    <div class="byline">
+      Cathy Liu · Cancer biology &amp; quantitative analysis · <a href="mailto:cathyliu014@gmail.com">cathyliu014@gmail.com</a><br>
+      Prepared for the Artandi Lab, Stanford University<br>
+      Personal exploratory project, October 2026
+    </div>
+    <nav class="section-nav" aria-label="Demo sections">
+      <a href="#motivation">Motivation</a>
+      <a href="#a1">Passage comparison</a>
+      <a href="#a2">Measurement audit</a>
+      <a href="#relevance">Relevance</a>
+    </nav>
+    <p>The lab studies how telomerase supports the continued growth of stem cells and cancer cells. Its digital telomere measurements make it possible to look beyond an average length and ask how the whole distribution changes. That creates a practical experimental question: when two passages look similar by their mean, which other readouts should we check before calling the response a plateau?</p>
+    <p>I built a small comparison tool using the lab’s published TERT-knockout measurements, with a separate reproducible check of Telometer on its public example reads. It connects a distribution-level observation to the next comparison, controls and sample records I would want before interpreting a new experiment.</p>
+
+    <hr id="motivation">
+    <section aria-labelledby="how-heading">
+      <h2 id="how-heading">How it works</h2>
+      <p>There are 2,610 deposited measurements across four passage samples. Choose a pair and a short-length threshold; the curves and comparison record are recalculated from the individual rows. A read-length restriction is available as a <em>selection-bias stress test</em>, not as a recommended quality filter. The second analysis runs the authors’ current code on a separate example BAM to make parameter sensitivity visible.</p>
+      <p class="small-note">These are four passage samples, not 2,610 independent biological replicates. No clone-level uncertainty or statistical significance is estimated.</p>
+    </section>
+
+    <hr id="a1">
+    <section aria-labelledby="analysis-one-heading">
+      <h2 id="analysis-one-heading">Analysis 1 — Which readout changes the next experiment?</h2>
+      <div class="experiment">
+        <div class="exp-label">Question</div>
+        <div class="exp-title">A similar mean can conceal a different distribution</div>
+        <p>Start with day 98 → 105. Compare mean, median and the fraction below 2 kb; then widen the passage interval or change the threshold. “Short” here is an exploratory measurement definition, not a clinical boundary.</p>
+      </div>
+      <div class="panel">
+        <div class="controls">
+          <label for="pair-select">Passage comparison
+            <select id="pair-select"><option value="98,105">Day 98 → 105</option><option value="66,78">Day 66 → 78</option><option value="66,98">Day 66 → 98</option><option value="66,105">Day 66 → 105</option><option value="78,98">Day 78 → 98</option><option value="78,105">Day 78 → 105</option></select>
+          </label>
+          <label for="threshold">Short-length threshold: <output id="threshold-label" for="threshold">2,000 bp</output>
+            <input id="threshold" type="range" min="1000" max="4000" step="250" value="2000">
+          </label>
+          <label for="min-read">Read-length sensitivity
+            <select id="min-read"><option value="0">As deposited — retain all rows</option><option value="4000">Retain reads ≥ 4 kb — stress test</option><option value="8000">Retain reads ≥ 8 kb — stress test</option></select>
+          </label>
+        </div>
+        <div class="legend" id="cdf-legend"></div>
+        <svg id="hero-viz" class="viz" viewBox="0 0 600 340" role="img" aria-labelledby="cdf-title cdf-description"><title id="cdf-title">Cumulative telomere length distributions</title><desc id="cdf-description">Loading measurements.</desc></svg>
+        <div class="readout" id="readout" aria-live="polite">Loading verified measurements…</div>
+        <div class="table-wrap"><table id="comparison-table"><caption>Selected samples, as measured</caption><thead><tr><th>Passage</th><th>Retained / source</th><th>Mean bp</th><th>Median bp</th><th>Below threshold</th></tr></thead><tbody></tbody></table></div>
+        <p class="utility"><strong>What this lets the lab do:</strong> decide whether a passage comparison needs a distribution-level follow-up, a repeat of sample handling, or both.</p>
+        <p class="utility"><strong>Where Cathy adds value:</strong> connect quantitative readout checks with explicit controls and traceable sample records, drawing on cancer-data analysis and analytical-method documentation.</p>
+        <figcaption><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11189511/">Sanchez et al., 2024</a>, source workbook <code>hesc_tertko</code>. Each curve is an empirical cumulative distribution; higher values mean more measurements at or below a length. The short fraction uses strictly &lt; the chosen threshold. Lengths are bp, not whole-read lengths. <a href="data/tertko.csv" download>All deposited rows (CSV)</a>.</figcaption>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><span class="metric-val">2,610</span><span class="metric-desc">deposited measurements</span></div>
+        <div class="metric"><span class="metric-val">4</span><span class="metric-desc">passage samples; replication unknown</span></div>
+        <div class="metric"><span class="metric-val" id="metric-three">—</span><span class="metric-desc" id="metric-three-label">short-fraction change, percentage points</span></div>
+      </div>
+      <h3>Carry the observation into a testable comparison</h3>
+      <div id="experiment-plan" class="plan" aria-live="polite"></div>
+      <p class="small-note">The proposed repeat would compare independent edited clones and matched controls, recording population doublings as well as elapsed days. More reads can improve a distribution estimate; they cannot replace biological replication. The form below is a blank planning aid, not an executed protocol or a powered sample-size recommendation.</p>
+      <div class="actions"><button id="export-comparison" type="button">Download comparison record</button><button id="export-plan" type="button">Download blank validation log</button></div>
+      <p id="export-status" class="small-note" role="status"></p>
+    </section>
+
+    <hr id="a2">
+    <section aria-labelledby="analysis-two-heading">
+      <h2 id="analysis-two-heading">Analysis 2 — Make the measurement settings part of the record</h2>
+      <div class="experiment">
+        <div class="exp-label">Reproduction + sensitivity</div>
+        <div class="exp-title">One example BAM, three explicit gap settings</div>
+        <p>I ran Telometer 2.0.3 on the repository’s public example BAM, comparing the CLI’s 20 bp default with the 100 bp example and 250 bp options-table value in the pinned README. Recording each setting makes the comparison reproducible. These are alternatives to inspect, not three biological replicates or a search for the “best” result.</p>
+      </div>
+      <div class="panel">
+        <div class="controls">
+          <label for="gap-pair">Settings to compare
+            <select id="gap-pair"><option value="20,250">20 bp → 250 bp</option><option value="20,100">20 bp → 100 bp</option><option value="100,250">100 bp → 250 bp</option></select>
+          </label>
+          <label for="delta-cutoff">Review absolute changes of at least
+            <select id="delta-cutoff"><option value="100">100 bp</option><option value="250">250 bp</option><option value="500">500 bp</option><option value="1000">1,000 bp</option></select>
+          </label>
+          <label for="read-select">Review list — retention changes, then largest length changes<select id="read-select"></select></label>
+        </div>
+        <p id="audit-summary" class="small-note"></p>
+        <svg id="audit-viz" class="viz" viewBox="0 0 600 190" role="img" aria-labelledby="audit-title audit-description"><title id="audit-title">Two telomere measurements for one read</title><desc id="audit-description">Loading the executed Telometer results.</desc></svg>
+        <div id="audit-readout" class="readout" aria-live="polite"></div>
+        <p class="utility"><strong>What this lets the lab do:</strong> find measurements that need read-level inspection and record software version and parameters before comparing experiments.</p>
+        <p class="utility"><strong>Where Cathy adds value:</strong> turn a reproducibility check into a specific review list and a repeatable comparison for the next dataset.</p>
+        <figcaption><a href="https://github.com/santiago-es/Telometer/tree/f17a7e43e6d6e4313354180fa42b761b581b1b14">Telometer repository and example BAM</a>; 812 distinct read IDs in 1,640 alignment records. Current-code test, not a re-run of the 2024 paper. The BAM’s source sample is not mapped to the passage experiment above. Telomeres-per-gigabase is deliberately not calculated from a subset.</figcaption>
+        <div class="actions"><button type="button" id="export-audit">Download read-level review list</button></div>
+      </div>
+    </section>
+
+    <hr id="relevance">
+    <section aria-labelledby="relevance-heading">
+      <h2 id="relevance-heading">Why this matters for the lab</h2>
+      <p>A follow-up experiment needs both a biological comparison and a stable definition of its measurement. Here the passage analysis asks which readouts deserve to travel together; the code audit asks whether their measurement settings have been recorded explicitly. Together they support a concrete next step: repeat a selected passage comparison with independent clones, matched handling and a complementary length assay, then inspect whether the distribution-level change persists.</p>
+      <p>This is an inferred opportunity for experimental interpretation and planning, not a claim about the lab’s internal priorities. A new dataset can reuse the comparison after adding sample, clone, genotype, passage, library-batch and read-length fields. Biological variance and independent validation would still be needed before making a mechanistic claim.</p>
+      <h2>What I would bring</h2>
+      <p>My previous work combines computational analysis of pancreatic-cancer data with practical analytical-method work and detailed experimental documentation. I would like to help connect a research question to the measurements, controls and records needed to answer it. This project reflects that approach; it does not stand in for hands-on experience with hESC culture, telomere-capture libraries or a telomerase assay.</p>
+      <h2>Methods note</h2>
+      <p class="methods-note">The primary analysis preserves all 2,610 rows, including 25 identical visible records that cannot safely be deduplicated without original read IDs. Worksheet-row IDs are traceability labels, not molecule IDs. The workbook labels the last passage day 105, whereas the Figure 2 caption says 108; this tool keeps the deposited label. Means, medians and fractions are descriptive, and read restrictions can preferentially remove short telomeres. No p-values, biological confidence intervals or clinical classification are reported.</p>
+      <p class="methods-note">The separate BAM audit uses Telometer 2.0.3, a pinned repository commit and explicit parameters. A sensitivity flag does not tell us which setting is correct. Source hashes, dependency versions, processing scripts, tests and reuse conditions are in the <a href="https://github.com/liuzhitong330/artandi-lab-demo">public repository</a>. <a href="data/tertko.json">Primary provenance</a> · <a href="data/telometer-audit.json">Executed audit and provenance</a>. Analysis and interface prepared with AI assistance; no claim of unaided implementation or experimental validation.</p>
+    </section>
+    <footer>
+      Cathy Liu · <a href="mailto:cathyliu014@gmail.com">cathyliu014@gmail.com</a> · <a href="tel:+14152163799">415-216-3799</a><br>
+      Epilepsy neurostimulation project, <a href="https://arxiv.org/abs/2606.04339">arXiv:2606.04339</a>
+    </footer>
+  </main>
+  <script src="data.js?v=20261006-1"></script>
+  <script src="app.js?v=20261006-1"></script>
+</body>
+</html>
